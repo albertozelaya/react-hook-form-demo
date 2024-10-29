@@ -6,12 +6,28 @@ function App() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+    watch,
+    setValue,
+    reset,
+  } = useForm({
+    defaultValues: {
+      nombre: "Juan",
+      correo: "juanperes@gmail.com",
+      password: "123456",
+    },
+  });
 
   console.log(errors.fechaNacimiento); //*hace un llenado de objeto cuando el segundo arg required es true
   //* Hay que validar si nombre existe
 
-  const onSubmit = handleSubmit((data) => console.log(data));
+  const onSubmit = handleSubmit((data) => {
+    console.log(data.foto);
+    //*Se pueden cambiar etc
+    alert("enviado datos...");
+
+    reset() //*Para limpiar todos los valores
+    // setValue("correo", ""); //*Que su nuevo valor este vacio
+  });
   return (
     <form onSubmit={onSubmit}>
       {/* El arg es la data que se envia */}
@@ -74,10 +90,14 @@ function App() {
         //
         type="password"
         {...register("confirmarPassword", {
-          required: true,
+          required: {
+            value: true,
+            message: "Confirmar password es requerido",
+          },
+          validate: (value) => watch("password") === value || "Las passwords no coinciden",
         })}
       />
-      {errors.confirmarPassword && <span>La confirmación es requerida</span>}
+      {errors.confirmarPassword && <span>{errors.confirmarPassword.message}</span>}
       {/* Fecha de nacimiento */}
       <label htmlFor="fechaNacimiento">Fecha de Nacimiento</label>
       <input
@@ -98,7 +118,7 @@ function App() {
             // console.log(fechaNacimient.getTime());
             // if (fechaNacimient.getTime() > verifi.getTime()) return "Fecha de nacimiento no valida";
             // console.log(new Date().getFullYear() - 18);
-            return edad >= 18 || "debes ser mayor de edad"
+            return edad >= 18 || "debes ser mayor de edad";
           },
         })}
       />
@@ -112,11 +132,30 @@ function App() {
         <option value="co">Colombia</option>
         <option value="ar">Argentina</option>
       </select>
+      {watch("pais") === "ar" && (
+        <>
+          <input
+            type="text"
+            placeholder="Provincia"
+            {...register("provincia", {
+              required: {
+                value: true,
+                message: "Provincia es requerida",
+              },
+            })}
+          ></input>
+          {errors.provincia && <span>{errors.provincia.message}</span>}
+        </>
+      )}
       {/* file */}
       <label htmlFor="foto">Foto de perfil</label>
       <input
         //
         type="file"
+        onChange={(e) => {
+          e.target.files[0]; /* Evento on change */
+          setValue("fotoDelUsuario", e.target.files[0]); /* segundo arg es el valor, primero el nombre */
+        }}
         {...register("foto")}
       />
       {/* terminos */}
@@ -124,10 +163,17 @@ function App() {
       <input
         //
         type="checkbox"
-        {...register("terminos", { required: true })}
+        {...register("terminos", {
+          required: {
+            value: true,
+            message: "Debe aceptar los terminos y condiciones",
+          },
+        })}
       />
-      {errors.terminos && <span>Te y condiciones son requeridos</span>}
+      {errors.terminos && <span>{errors.terminos.message}</span>}
       <button>Enviar</button>
+      <pre>{JSON.stringify(watch("password"), null, 2)}</pre>
+      {/* Se guarda inmediatamente en el estado al solo escribir */}
     </form>
   );
 }
